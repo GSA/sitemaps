@@ -47,4 +47,15 @@ module SitemapFixtures
   def sitemap_index_fixture
     @sitemap_index_fixture ||= Sitemaps.parse(sitemap_index_file)
   end
+
+  def sitemap_with_whitespace_file
+    @sitemap_with_whitespace_file ||= begin
+      path = File.join(File.dirname(__FILE__), "./fixtures/sitemap_with_whitespace.xml")
+      File.read(path).freeze
+    end
+  end
+
+  def sitemap_with_whitespace_fixture
+    @sitemap_with_whitespace_fixture ||= Sitemaps.parse(sitemap_with_whitespace_file)
+  end
 end

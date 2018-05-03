@@ -53,6 +53,12 @@ describe Sitemaps do
 
       expect(sitemap_index_fixture.sitemaps).to eql(entries)
     end
+
+    it "can parse a sitemap with whitespace around the elements" do
+      entries = [SE.new(URI.parse("http://www.example.com/"), Time.parse("2005-01-01"), :monthly, 0.8)]
+      sitemap = sitemap_with_whitespace_fixture
+      expect(sitemap.entries).to eq entries
+    end
   end
 
   # URL level fetching specs
