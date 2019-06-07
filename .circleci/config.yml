@@ -1,0 +1,61 @@
+version: 2.1
+
+executors:
+  test_executor:
+    working_directory: ~/sitemaps
+
+    docker:
+      - image: circleci/ruby:${RUBY_VERSION}
+
+jobs:
+  build:
+    environment:
+      RUBY_VERSION: << parameters.ruby_version >>
+    executor: test_executor
+    parameters:
+      ruby_version:
+        type: string
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - sitemaps-cache-v1-{{ arch }}-{{ .Branch }}-{{ .Revision }}
+            - sitemaps-cache-v1-{{ arch }}-{{ .Branch }}
+            - sitemaps-cache-v1
+
+      - run:
+          name: Bundle Install
+          command: |
+            bundle check --path=vendor/bundle || bundle install --clean --path vendor/bundle
+
+      - save_cache:
+          key: sitemaps-cache-v1-{{ arch }}-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - vendor/bundle
+
+      - run:
+          name: RSpec
+          command: bundle exec rspec spec
+
+      # Once lower-level offenses are resolved, the fail-level flags should be removed
+      # so that any offense will cause the build to fail.
+      - run:
+          name: Rubocop
+          command: bundle exec rubocop --fail-level warning --display-only-fail-level-offenses
+
+workflows:
+  build_and_test:
+    jobs:
+      - build:
+          name: 'ruby 2.3.8'
+          ruby_version: 2.3.8
+      - build:
+          name: 'ruby 2.4.6'
+          ruby_version: 2.4.6
+      - build:
+          name: 'ruby 2.5.5'
+          ruby_version: 2.5.5
+      - build:
+          name: 'ruby 2.6.3'
+          ruby_version: 2.6.3
