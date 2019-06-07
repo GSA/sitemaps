@@ -166,10 +166,34 @@ describe Sitemaps do
   end
 
   # URL level discovery specs
-  context "discover", vcr: { record: :new_episodes } do
-    it "can find and fetch a sitemap from a domain that's mentioned in a robots.txt" do
-      sitemap = Sitemaps.discover("http://www.digitalocean.com", max_entries: 10)
-      expect(sitemap.entries.length).to eq(10)
+  context 'discover', vcr: { record: :new_episodes } do
+    subject(:discovered) { Sitemaps.discover('www.example.com', max_entries: 10) }
+
+    context 'when a sitemap is mentioned in a robots.txt' do
+      let(:robots) { 'Sitemap: http://www.example.com/example_sitemap.xml' }
+
+      before do
+        stub_request(:get, 'http://www.example.com/robots.txt').
+          to_return(status: [200, 'OK'],
+                    body: robots,
+                    headers: { content_type: 'text/plain' })
+        stub_request(:get, 'http://www.example.com/example_sitemap.xml').
+          to_return(body: sitemap_file)
+      end
+
+      it 'can find and fetch the sitemap' do
+        expect(discovered.entries.length).to eq(5)
+      end
+
+      context 'when the sitemap is followed by a comment' do
+        let(:robots) do
+          'Sitemap: http://www.example.com/example_sitemap.xml #sitemap'
+        end
+
+        it 'can find and fetch the sitemap' do
+          expect(discovered.entries.length).to eq(5)
+        end
+      end
     end
   end
 end
