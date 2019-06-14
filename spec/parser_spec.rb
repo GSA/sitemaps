@@ -8,14 +8,16 @@ describe Sitemaps::Parser do
     REXML::Document.new(str).root
   end
 
+  let(:raw_sitemap) { sitemap_file('sitemap.valid.xml') }
+
   it "handles a max_entries parameter" do
-    result = Sitemaps::Parser.parse(sitemap_file, max_entries: 1)
+    result = Sitemaps::Parser.parse(raw_sitemap, max_entries: 1)
     expect(result.entries.length).to eq(1)
   end
 
   it "handles a filter block parameter" do
     filter = -> (entry) { entry.changefreq == :monthly }
-    result = Sitemaps::Parser.parse(sitemap_file, filter: filter)
+    result = Sitemaps::Parser.parse(raw_sitemap, filter: filter)
 
     expect(result.entries.length).to eq(1)
     expect(result.entries.first.changefreq).to eq(:monthly)
@@ -23,7 +25,7 @@ describe Sitemaps::Parser do
 
   it "handles both a max_entries and filter block parameter" do
     filter = -> (entry) { entry.priority > 0.4 } # matches default, total of 4 in the file
-    result = Sitemaps::Parser.parse(sitemap_file, max_entries: 2, filter: filter)
+    result = Sitemaps::Parser.parse(raw_sitemap, max_entries: 2, filter: filter)
 
     expect(result.entries.length).to eq(2)
     expect(result.entries.all?(&filter)).to be true
