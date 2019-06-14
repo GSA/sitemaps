@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.email         = ["jraphaelson@termscout.com"]
 
   spec.summary       = "Retrieve and parse sitemaps, according to the sitemaps.org spec."
-  spec.homepage      = "http://github.com/termscout/sitemaps"
-  spec.license       = "MIT"
+  spec.homepage      = "http://github.com/GSA/sitemaps"
+  spec.license       = "CC0 1.0 Universal"
 
   files = `git ls-files -z`.split("\x0")
   files.reject! { |f| f.match(%r{^(test|spec|features)/}) }

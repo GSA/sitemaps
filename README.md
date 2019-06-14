@@ -1,10 +1,11 @@
 # Sitemaps
 
 [![Gem](https://img.shields.io/gem/v/sitemaps_parser.svg?style=flat-square)](https://rubygems.org/gems/sitemaps_parser)
+[![CircleCI](https://circleci.com/gh/GSA/sitemaps.svg?style=svg)](https://circleci.com/gh/GSA/sitemaps)
 
 Discover, retrieve and parse XML sitemaps, according to the spec at [sitemaps.org](http://sitemaps.org).
 
-See [RDOC Documentation](http://lygaret.github.io/sitemaps) for detailed documentation.
+See [RDOC Documentation](https://gsa.github.io/sitemaps) for detailed documentation.
 
 ## Installation
 
@@ -56,7 +57,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/lygaret/sitemaps. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/GSA/sitemaps. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 
