@@ -11,10 +11,14 @@ jobs:
   build:
     environment:
       RUBY_VERSION: << parameters.ruby_version >>
+      ACTIVESUPPORT_VERSION: << parameters.activesupport_version >>
     executor: test_executor
     parameters:
       ruby_version:
         type: string
+      activesupport_version:
+        type: string
+        default: '~> 5.0'
     steps:
       - checkout
 
@@ -57,5 +61,15 @@ workflows:
           name: 'ruby 2.5.5'
           ruby_version: 2.5.5
       - build:
-          name: 'ruby 2.6.3'
+          name: 'ruby 2.6.3, activesupport 4'
           ruby_version: 2.6.3
+          activesupport_version: '4.0.0'
+      - build:
+          name: 'ruby 2.6.3, activesupport 5'
+          ruby_version: 2.6.3
+          activesupport_version: '~> 5.0'
+      - build:
+          name: 'ruby 2.6.3, activesupport 6'
+          ruby_version: 2.6.3
+          activesupport_version: '6.0.0.rc1'
+
