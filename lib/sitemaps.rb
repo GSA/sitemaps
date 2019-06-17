@@ -1,14 +1,15 @@
-require "active_support"
-require "active_support/core_ext/object/try"
-require "active_support/core_ext/object/blank"
+require 'active_support'
+require 'active_support/core_ext/object/try'
+require 'active_support/core_ext/object/blank'
 
-require "set"
-require "time"
-require "rexml/document"
+require 'set'
+require 'time'
+require 'rexml/document'
+require 'net/http'
 
-require "sitemaps/version"
-require "sitemaps/parser"
-require "sitemaps/fetcher"
+require 'sitemaps/version'
+require 'sitemaps/parser'
+require 'sitemaps/fetcher'
 
 # Discover, fetch and parse XML sitemaps as defined by the `http://sitemaps.org` spec.
 module Sitemaps
@@ -168,7 +169,7 @@ module Sitemaps
     def discover_roots(url, fetcher)
       robots = begin
         robotsurl      = url.clone
-        robotsurl.path = "/robots.txt"
+        robotsurl.path = '/robots.txt'
         robotstxt      = fetcher.call(robotsurl)
 
         discovered = robotstxt.scan(/^Sitemap: (\S+)/).flatten.map do |url|
