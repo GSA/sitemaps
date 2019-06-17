@@ -167,9 +167,27 @@ describe Sitemaps do
 
   # URL level discovery specs
   context "discover", vcr: { record: :new_episodes } do
+    subject(:discovered) { Sitemaps.discover('www.example.com', max_entries: 10) }
+
     it "can find and fetch a sitemap from a domain that's mentioned in a robots.txt" do
       sitemap = Sitemaps.discover("http://www.digitalocean.com", max_entries: 10)
       expect(sitemap.entries.length).to eq(10)
+    end
+
+    context 'when no sitemap is mentioned in robots.txt' do
+      before { stub_request(:get, %r{www.example.com}).to_return(status: 404) }
+
+      it 'looks for sitemaps in a few common locations' do
+        locations = %w[http://www.example.com/sitemap.xml
+                       http://www.example.com/sitemap_index.xml
+                       http://www.example.com/sitemap.xml.gz
+                       http://www.example.com/sitemap_index.xml.gz]
+        discovered
+
+        locations.each do |location|
+          expect(a_request(:get, location)).to have_been_made
+        end
+      end
     end
   end
 end
