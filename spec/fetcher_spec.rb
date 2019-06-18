@@ -1,6 +1,25 @@
 require 'spec_helper'
 
 describe Sitemaps::Fetcher, vcr: { record: :new_episodes } do
+  subject(:fetch) { Sitemaps::Fetcher.fetch(uri) }
+
+  let(:uri) { URI('http://www.example.com') }
+
+  context 'when the request is successful' do
+    before do
+      stub_request(:get, 'http://www.example.com').
+        to_return(status: 200, body: 'response body')
+    end
+
+    it 'returns the response body' do
+      expect(fetch).to eq 'response body'
+    end
+
+    it 'can take a string as an argument' do
+      expect(Sitemaps::Fetcher.fetch('www.example.com')).to eq 'response body'
+    end
+  end
+
   it "can download a file" do
     uri    = URI.parse("http://httpbin.org/")
     source = Sitemaps::Fetcher.fetch(uri)

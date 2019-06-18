@@ -40,29 +40,33 @@ module Sitemaps
     # @api private
     # @private
     def self.parse_loc(root)
-      loc = root.get_text("loc").try(:value)
+      loc = get_text(root, 'loc')
       loc && URI.parse(loc) rescue nil
     end
 
     # @api private
     # @private
     def self.parse_lastmod(root)
-      mod = root.get_text("lastmod").try(:value)
+      mod = get_text(root, 'lastmod')
       mod && Time.parse(mod) rescue nil
     end
 
     # @api private
     # @private
     def self.parse_changefreq(root)
-      freq = root.get_text("changefreq").try(:value)
+      freq = get_text(root, 'changefreq')
       freq && VALID_CHANGEFREQ.include?(freq) ? freq.to_sym : nil
     end
 
     # @api private
     # @private
     def self.parse_priority(root)
-      priority = root.get_text("priority").try(:value) || "0.5"
+      priority = get_text(root, 'priority') || '0.5'
       priority && Float(priority) rescue 0.5 # default priority according to spec
+    end
+
+    def self.get_text(root, key)
+      root.get_text(key)&.value&.strip
     end
   end
 end
