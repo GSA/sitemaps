@@ -207,8 +207,8 @@ describe Sitemaps do
   end
 
   # URL level discovery specs
-  context 'discover', vcr: { record: :new_episodes } do
-    subject(:discovered) { Sitemaps.discover('www.example.com', max_entries: 10) }
+  describe '.discover', vcr: { record: :new_episodes } do
+    subject(:discover) { Sitemaps.discover('www.example.com', max_entries: 10) }
 
     context 'when a sitemap is mentioned in a robots.txt' do
       let(:robots) { 'Sitemap: http://www.example.com/example_sitemap.xml' }
@@ -219,11 +219,11 @@ describe Sitemaps do
                     body: robots,
                     headers: { content_type: 'text/plain' })
         stub_request(:get, 'http://www.example.com/example_sitemap.xml').
-          to_return(body: sitemap_file)
+          to_return(body: sitemap_file('sitemap.valid.xml'))
       end
 
       it 'can find and fetch the sitemap' do
-        expect(discovered.entries.length).to eq(5)
+        expect(discover.entries.length).to eq(5)
       end
 
       context 'when the sitemap is followed by a comment' do
@@ -232,7 +232,7 @@ describe Sitemaps do
         end
 
         it 'can find and fetch the sitemap' do
-          expect(discovered.entries.length).to eq(5)
+          expect(discover.entries.length).to eq(5)
         end
       end
     end
@@ -245,7 +245,7 @@ describe Sitemaps do
                        http://www.example.com/sitemap_index.xml
                        http://www.example.com/sitemap.xml.gz
                        http://www.example.com/sitemap_index.xml.gz]
-        discovered
+        discover
 
         locations.each do |location|
           expect(a_request(:get, location)).to have_been_made
