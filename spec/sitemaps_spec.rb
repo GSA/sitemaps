@@ -13,45 +13,86 @@ describe Sitemaps do
   end
 
   # document level parser specs
-  context "parser" do
-    it "can parse a valid sitemap" do
-      sitemap = sitemap_fixture
-      expect(sitemap).not_to be_nil
+  describe '.parse' do
+    subject(:sitemap) { Sitemaps.parse(raw_sitemap) }
+
+    context 'when the sitemap is valid' do
+      let(:raw_sitemap) { sitemap_file('sitemap.valid.xml') }
+
+      it 'can parse the sitemap' do
+        expect(sitemap).not_to be_nil
+      end
+
+      it 'can present a list of entries' do
+        entries = [
+          SE.new(URI.parse('http://www.example.com/'),
+                 Time.parse('2005-01-01'),
+                 :monthly,
+                 0.8),
+          SE.new(URI.parse('http://www.example.com/c?item=12&desc='), nil, :weekly, 0.5),
+          SE.new(URI.parse('http://www.example.com/c?item=73&desc='),
+                 Time.parse('2004-12-23'),
+                 :weekly,
+                 0.5),
+          SE.new(URI.parse('http://www.example.com/c?item=74&desc='),
+                 Time.parse('2004-12-23T18:00:15+00:00'),
+                 nil,
+                 0.3),
+          SE.new(URI.parse('http://www.example.com/c?item=83&desc='),
+                 Time.parse('2004-11-23'),
+                 nil,
+                 0.5)
+        ]
+
+        expect(sitemap.entries).to eql(entries)
+      end
     end
 
-    it "can present a list of entries" do
-      entries = [
-        SE.new(URI.parse("http://www.example.com/"), Time.parse("2005-01-01"), :monthly, 0.8),
-        SE.new(URI.parse("http://www.example.com/c?item=12&desc="), nil, :weekly, 0.5),
-        SE.new(URI.parse("http://www.example.com/c?item=73&desc="), Time.parse("2004-12-23"), :weekly, 0.5),
-        SE.new(URI.parse("http://www.example.com/c?item=74&desc="), Time.parse("2004-12-23T18:00:15+00:00"), nil, 0.3),
-        SE.new(URI.parse("http://www.example.com/c?item=83&desc="), Time.parse("2004-11-23"), nil, 0.5)
-      ]
+    context 'when the sitemap is invalid' do
+      let(:raw_sitemap) { sitemap_file('sitemap.invalid.xml') }
 
-      expect(sitemap_fixture.entries).to eql(entries)
+      it 'skips entries with a malformed or missing `loc`' do
+        entries = [
+          SE.new(URI.parse('http://www.example.com/'), Time.parse('2005-01-01'), :monthly, 0.8)
+        ]
+
+        # there are 3 entries defined in the file, but two have unparsable locations
+        expect(sitemap.entries).to eql(entries)
+      end
     end
 
-    it "skips entries with a malformed or missing `loc`" do
-      entries = [
-        SE.new(URI.parse("http://www.example.com/"), Time.parse("2005-01-01"), :monthly, 0.8)
-      ]
+    context 'when the sitemap is a sitemap index' do
+      let(:raw_sitemap) { sitemap_file('sitemap_index.valid.xml') }
 
-      # there are 3 entries defined in the file, but two have unparsable locations
-      expect(invalid_fixture.entries).to eql(entries)
+      it 'can parse the sitemap index' do
+        expect(sitemap).not_to be_nil
+      end
+
+      it 'can present a list of entries' do
+        entries = [
+          SM.new(URI.parse('http://www.example.com/sitemap1.xml.gz'),
+                 Time.parse('2004-10-01T18:23:17+00:00')),
+          SM.new(URI.parse('http://www.example.com/sitemap2.xml.gz'),
+                 Time.parse('2005-01-01'))
+        ]
+
+        expect(sitemap.sitemaps).to eql(entries)
+      end
     end
 
-    it "can parse a valid sitemap index" do
-      sitemap = sitemap_index_fixture
-      expect(sitemap).not_to be_nil
-    end
 
-    it "can present a list of entries" do
-      entries = [
-        SM.new(URI.parse("http://www.example.com/sitemap1.xml.gz"), Time.parse("2004-10-01T18:23:17+00:00")),
-        SM.new(URI.parse("http://www.example.com/sitemap2.xml.gz"), Time.parse("2005-01-01"))
-      ]
 
-      expect(sitemap_index_fixture.sitemaps).to eql(entries)
+    context 'when a sitemap contains whitespace around the elements' do
+      let(:raw_sitemap) { sitemap_file('sitemap_with_whitespace.xml') }
+
+      it 'can parse the sitemap' do
+        entries = [SE.new(URI.parse('http://www.example.com/whitespace'),
+                          Time.parse('2005-01-01'),
+                          :monthly,
+                          0.8)]
+
+        expect(sitemap.entries).to eq entries
+      end
     end
   end
 
@@ -166,10 +207,50 @@ describe Sitemaps do
   end
 
   # URL level discovery specs
-  context "discover", vcr: { record: :new_episodes } do
-    it "can find and fetch a sitemap from a domain that's mentioned in a robots.txt" do
-      sitemap = Sitemaps.discover("http://www.digitalocean.com", max_entries: 10)
-      expect(sitemap.entries.length).to eq(10)
+  describe '.discover', vcr: { record: :new_episodes } do
+    subject(:discover) { Sitemaps.discover('www.example.com', max_entries: 10) }
+
+    context 'when a sitemap is mentioned in a robots.txt' do
+      let(:robots) { 'Sitemap: http://www.example.com/example_sitemap.xml' }
+
+      before do
+        stub_request(:get, 'http://www.example.com/robots.txt').
+          to_return(status: [200, 'OK'],
+                    body: robots,
+                    headers: { content_type: 'text/plain' })
+        stub_request(:get, 'http://www.example.com/example_sitemap.xml').
+          to_return(body: sitemap_file('sitemap.valid.xml'))
+      end
+
+      it 'can find and fetch the sitemap' do
+        expect(discover.entries.length).to eq(5)
+      end
+
+      context 'when the sitemap is followed by a comment' do
+        let(:robots) do
+          'Sitemap: http://www.example.com/example_sitemap.xml #sitemap'
+        end
+
+        it 'can find and fetch the sitemap' do
+          expect(discover.entries.length).to eq(5)
+        end
+      end
+    end
+
+    context 'when no sitemap is mentioned in robots.txt' do
+      before { stub_request(:get, %r{www.example.com}).to_return(status: 404) }
+
+      it 'looks for sitemaps in a few common locations' do
+        locations = %w[http://www.example.com/sitemap.xml
+                       http://www.example.com/sitemap_index.xml
+                       http://www.example.com/sitemap.xml.gz
+                       http://www.example.com/sitemap_index.xml.gz]
+        discover
+
+        locations.each do |location|
+          expect(a_request(:get, location)).to have_been_made
+        end
+      end
     end
   end
 end
